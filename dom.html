@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<head>
+    <title>Phones</title>
+    <style>
+        #basket{
+            text-align: center;
+            font-size: 1em;
+            color: blue;
+        }
+        #basket h1{
+            font-size: 2em;
+            color: rgb(4, 4, 49);
+        }
+        #basket button {
+            margin-left: auto;
+            margin-right: auto;
+            height: 3em;
+            width: 9em;
+            margin-bottom: 10px;
+            border: 0;
+            border-radius: 5px;
+            color: white;
+        }
+        #purchases {
+            font-family: sans-serif;
+        }
+        #purchases button {
+            height: 1.5em;
+            width: 8em;
+            background-color: green;
+        }
+        #confirm {
+            background-color: blue;
+        }
+        #clear {
+            background-color: brown;
+        }
+        #container{
+            display: grid;
+            grid-template-columns: auto auto auto auto;
+            grid-column-gap: 50px;
+            grid-row-gap: 50px;
+        }
+        #container div {
+            border: 2px solid grey;
+            border-radius: 20px;
+        }
+        #container div img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #container div h1 {
+            text-align: center;
+            font-size: 1em;
+        }
+        #container p {
+            text-align: center;
+            font-size: 1em;
+            margin: 5px;
+        }
+        #container button {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            height: 3em;
+            margin-bottom: 10px;
+            border: 0;
+            border-radius: 5px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="basket"><h1>Personal basket</h1>
+        <div id="purchases"></div>
+        <button id="confirm">Confirm</button>
+        <button id="clear">Clear</button>
+    </div>
+    <div id="container"></div>
+    <script>
+        firstTime = true;
+        (function loadData() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const basket = document.querySelector('#basket');
+                    const purchaseList = document.querySelector('#purchases');
+                    const container = document.querySelector('#container');
+                    const confirmationButton = document.querySelector('#confirm');
+                    const clearButton = document.querySelector('#clear');
+                    if(firstTime){
+                        confirmationButton.addEventListener("click", function(){
+                            purchaseList.innerHTML = "";
+                        });
+                        clearButton.addEventListener("click", function(){
+                            container.innerHTML = "";
+                            purchaseList.innerHTML = "";
+                            loadData();
+                        });
+                        firstTime = false;
+                    }
+                    phones = JSON.parse(this.responseText);
+                    phones.forEach(phone => {
+                        const phoneContainer = document.createElement('div');
+                        const header = document.createElement('h1');
+                        header.innerText = phone.productName;
+                        const img = document.createElement('img');
+                        img.src = "http://apeps.kiev.ua/images/phones/" + phone.id + ".jpg";
+                        img.title = phone.brandName;
+                        const osDescription = document.createElement('p');
+                        osDescription.innerText = "OS: " + phone.operationSystem;
+                        const cardNumberDescription = document.createElement('p');
+                        cardNumberDescription.innerText = "Cards number: " + phone.numSimCard;
+                        const priceDescription = document.createElement('p');
+                        priceDescription.innerText = phone.priceUAH.substr(0, phone.priceUAH.length-3) + " " 
+                        + phone.priceUAH.substr(-3) + " ₴";
+                        priceDescription.style.color = "orange";
+                        priceDescription.style.fontSize = "3em";
+                        const button = document.createElement('button');
+                        if(phone.countProducts > 0){
+                            button.innerText = "BUY NOW";
+                            button.style.backgroundColor = "green";
+                            var purchaseListener = function() {purchase(this, phone);};
+                            function purchase(button, phone){
+                                phone.countProducts--;
+                                if(phone.countProducts < 1){
+                                    button.innerText = "NOT AVAILABLE";
+                                    button.style.backgroundColor = "salmon";
+                                    button.removeEventListener("click", purchaseListener);
+                                }                            
+                                const phoneInBasket = document.createElement('div');
+                                phoneInBasket.innerText = phone.productName + " " + phone.priceUAH + " ";
+                                const removeElementButton = document.createElement('button');
+                                removeElementButton.innerText = "Remove";
+                                removeElementButton.addEventListener("click", function(){
+                                    phoneInBasket.innerHTML = "";
+                                });
+                                phoneInBasket.appendChild(removeElementButton);
+                                purchaseList.appendChild(phoneInBasket); 
+                            }
+                            button.addEventListener("click", purchaseListener, false);
+                        }
+                        else{
+                            button.innerText = "NOT AVAILABLE";
+                            button.style.backgroundColor = "salmon";
+                        };
+                        phoneContainer.appendChild(header);
+                        phoneContainer.appendChild(img);
+                        phoneContainer.appendChild(osDescription);
+                        phoneContainer.appendChild(cardNumberDescription);
+                        phoneContainer.appendChild(priceDescription);
+                        phoneContainer.appendChild(button);
+                        container.appendChild(phoneContainer);
+                    });
+                }
+            };
+            xhttp.open("GET", "http://apeps.kiev.ua/post/getphones", true);
+            xhttp.send();
+        })();
+      
+    </script>
+</body>
